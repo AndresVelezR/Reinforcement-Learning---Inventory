@@ -40,6 +40,7 @@ Otras constantes del problema que tampoco tienen justificación escrita **(por c
 - **Alternativas:** usar el mismo tipo de acción para los dos algoritmos; acciones discretas con paso 1 (51 acciones).
 - **Por qué:** DQN calcula un valor Q por acción y elige el máximo, así que necesita acciones discretas. PPO produce directamente la acción y admite continuas. El rango simétrico [-1, 1] es lo que recomienda Stable-Baselines3 para PPO.
 - **Qué se sacrifica:** DQN solo puede pedir múltiplos de 5, y PPO puede pedir cualquier entero. Los dos algoritmos no tienen exactamente el mismo conjunto de acciones, lo que hace la comparación entre ellos menos pareja. Con paso 1 el DQN tendría más resolución, pero 51 salidas en la red hacen el aprendizaje más difícil **(esperado, no medido)**.
+- **Detalle del redondeo (sin efecto práctico):** la acción continua se redondea con `round()` de Python, que en empates exactos redondea al número par. Comprobado en una copia temporal con `InventoryEnv._to_order`: la acción -0.5 da 12 (no 13) y +0.5 da 38 (no 37); -1, 0 y +1 dan 0, 25 y 50.
 - **Dónde:** `config.py`: `N_ACTIONS`, `MAX_ORDER`; `InventoryEnv.__init__` (`continuous`), `InventoryEnv._to_order`; `train.py`: `continuous = algo == "ppo"`.
 
 ## 5. Por qué DQN y PPO, y no otros métodos
@@ -113,6 +114,7 @@ Otras constantes del problema que tampoco tienen justificación escrita **(por c
 - **La referencia (s, S) tiene resolución 4** (paso de la cuadrícula). Medición puntual de una revisión independiente (no versionada en `results/`, la reprodujimos): con paso 1 sale s=78, S=86, el costo de (s, S) baja un poco (6250.8 en test) y la diferencia con RL pasa a -21.6 a -23.5, que sigue siendo distinguible de cero.
 - **El intervalo de confianza de la comparación solo cubre la variabilidad de la demanda**, no la del entrenamiento (3 semillas).
 - **No hay óptimo exacto** contra el cual comparar.
+- **Números fijos fuera de `config.py`:** `evaluate.py` tiene escritos a mano los 20 episodios de `--quick`, los 60 días de la trayectoria, el rango `arange(0, 141)` de la figura de política y el factor `1.3` del eje de las curvas; y `train.py` tiene el `learning_starts=500` de `--quick`. Cambiarlos exige editar el código.
 
 ## Preguntas frecuentes
 
@@ -165,8 +167,8 @@ Una prueba similar con una red de 128x128 (150 000 pasos, semilla 0) dio 6131.8 
 
 ### ¿Por qué el DQN se ve distinto a (s, S) cuando hay poco inventario en politica_aprendida.png?
 
-Mirando la figura: a la izquierda (posición de inventario bajo ~40) el DQN pide 25-30 unidades mientras (s, S) pide 50, pero del lado derecho las dos curvas coinciden bastante.
+Mirando la figura: a la izquierda (posición de inventario bajo, hasta ~54) el DQN pide 25-30 unidades mientras (s, S) pide 50, pero del lado derecho las dos curvas coinciden bastante.
 
-Explicación: son estados que casi no ocurren. Se midió en los 200 episodios de test: la posición de inventario mínima fue 45 con (s, S), 40 con el DQN (semilla 0) y 52 con el PPO (semilla 2); en ningún día la posición bajó de 40. Si el agente casi nunca visita esos estados, casi no tuvo datos para aprender qué hacer en ellos y la red extrapola de forma arbitraria. Eso no afecta el costo, porque esos estados no se visitan. Además, la figura es una situación artificial: reparte la posición de inventario en partes iguales entre bodega y pedidos en camino (ver `evaluate.py`), una combinación que rara vez ocurre tal cual.
+Explicación: son estados que casi no ocurren. Se midió en los 200 episodios de test: la posición de inventario mínima fue 45 con (s, S), 40 con el DQN (semilla 0) y 52 con el PPO (semilla 2); en ningún día la posición bajó de 40. Una revisión independiente (medición no versionada en `results/`) midió además que la diferencia entre el DQN y (s, S) aparece con posición de inventario ≤ 54, y que ese rango casi no se visita: menos de 0.3 % de los días tiene posición menor que 50 (0.03 % con (s, S), 0.20 % con el DQN y 0.00 % con el PPO). Si el agente casi nunca visita esos estados, casi no tuvo datos para aprender qué hacer en ellos y la red extrapola de forma arbitraria. Eso no afecta el costo, porque esos estados no se visitan. Además, la figura es una situación artificial: reparte la posición de inventario en partes iguales entre bodega y pedidos en camino (ver `evaluate.py`), una combinación que rara vez ocurre tal cual.
 
-Lo que sí se aprende bien es la zona donde vive el agente (posición de inventario entre ~50 y ~85), donde las políticas se parecen.
+Lo que sí se aprende bien es la zona donde vive el agente (posición de inventario entre ~55 y ~85), donde las políticas se parecen.
