@@ -84,3 +84,18 @@ def test_lead_time_with_nonzero_pipeline():
     assert env.inventory == 16 and env.pipeline == [10, 0]   # inicio dia 2
     env.step(0)
     assert env.inventory == 26 and env.pipeline == [0, 0]    # inicio dia 3: llega el pedido
+
+
+def test_lost_sales_when_demand_equals_inventory():
+    # demanda igual al inventario: se vende todo y no se pierde nada
+    env = InventoryEnv()
+    env.reset(seed=0)
+    fixed_demand(env, 40)  # el inventario inicial es 40
+    _, _, _, _, info = env.step(0)
+    assert info["sales"] == 40 and info["lost_sales"] == 0 and info["inventory"] == 0
+    assert info["cost"] == 0  # sin sobrante, sin ventas perdidas, sin pedido
+    # una unidad mas de demanda: se pierde exactamente una
+    env.reset(seed=0)
+    fixed_demand(env, 41)
+    _, _, _, _, info = env.step(0)
+    assert info["lost_sales"] == 1 and info["cost"] == C.LOST_SALE_COST
