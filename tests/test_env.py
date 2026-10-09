@@ -108,3 +108,17 @@ def test_truncated_only_at_last_day():
         _, _, terminated, truncated, _ = env.step(0)
         assert not terminated
         assert truncated == (day == C.EPISODE_LEN)  # solo el dia 100
+
+
+def test_continuous_action_is_rounded_not_truncated():
+    env = InventoryEnv(continuous=True)
+
+    def order_for(x):
+        env.reset(seed=0)
+        fixed_demand(env, 0)
+        return env.step(np.array([x], dtype=np.float32))[4]["order"]
+
+    assert order_for(-0.496) == 13  # (x + 1) / 2 * 50 = 12.6 -> 13 (truncar daria 12)
+    assert order_for(0.404) == 35   # 35.1 -> 35
+    assert order_for(0.0) == 25
+    assert order_for(-1.0) == 0 and order_for(1.0) == 50
