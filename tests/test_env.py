@@ -65,3 +65,22 @@ def test_shapes_and_truncation():
 def test_check_env():
     check_env(InventoryEnv(continuous=False))
     check_env(InventoryEnv(continuous=True))
+
+
+def fixed_demand(env, value):
+    # reemplaza el sorteo de la demanda por un valor fijo
+    env._sample_demand = lambda: value
+
+
+def test_lead_time_with_nonzero_pipeline():
+    # el pipeline [7, 9] llega en orden (el mas viejo primero) y el pedido nuevo al tercer dia
+    env = InventoryEnv()
+    env.reset(seed=0)
+    fixed_demand(env, 0)
+    env.inventory, env.pipeline = 0, [7, 9]
+    env.step(2)  # pide 10
+    assert env.inventory == 7 and env.pipeline == [9, 10]    # inicio dia 1
+    env.step(0)
+    assert env.inventory == 16 and env.pipeline == [10, 0]   # inicio dia 2
+    env.step(0)
+    assert env.inventory == 26 and env.pipeline == [0, 0]    # inicio dia 3: llega el pedido
