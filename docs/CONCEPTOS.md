@@ -19,6 +19,27 @@ Si un día la demanda supera lo que hay en bodega, **esas ventas se pierden** (e
 
 Este problema se llama **control de inventarios con demanda estocástica y lead time**. En la literatura: *lost-sales inventory problem with lead time*. Es difícil porque hay que decidir sin conocer la demanda y con retraso; para esta variante no se conoce una regla óptima simple.
 
+### Un día del simulador, paso a paso
+
+Números reales de `python demo.py --policy ppo --days 10 --model-seed 2` (el modelo PPO guardado en `models/`, episodio de semilla 1000). Mira el **día 3**:
+
+```
+ dia  inventario   pipeline  pedido  demanda  ventas perdidas   costo
+   3          31   [21, 17]      18       17                0      60
+   4          35   [17, 18]      ...
+```
+
+1. **Estado.** Hay 31 unidades en bodega. En camino hay dos pedidos: uno de 21 (el más viejo, llega al final de hoy) y uno de 17.
+2. **Acción.** El agente decide pedir 18 unidades.
+3. **Demanda.** Hoy llegan clientes que quieren 17 unidades (el simulador la sortea; el agente no la conocía).
+4. **Ventas.** Se venden min(31, 17) = 17. No faltó nada: ventas perdidas = 0. Sobran 31 - 17 = 14.
+5. **Costo.** 1 x 14 (almacenar) + 9 x 0 (ventas perdidas) + 10 (hay pedido) + 2 x 18 (unidades pedidas) = **60**. La recompensa del paso es -60/10 = -6.
+6. **Nuevo estado.** La cola queda [21, 17, 18]. Llegan los 21 más viejos: inventario = 14 + 21 = **35**, y el pipeline pasa a **[17, 18]**. Es exactamente la fila del día 4.
+
+**El pedido tarda 3 días.** Las 18 unidades que se piden hoy (día 3) aparecen en la bodega al inicio del día 6: el día 5 empieza con 31, la demanda es 24, quedan 7; al terminar ese día llegan los 18 y el día 6 empieza con 7 + 18 = **25**. Lo mismo pasó con el pedido de 11 unidades del día 0: se ve en el inventario de 31 del día 3.
+
+**Un día con quiebre de stock (día 8 de la misma corrida):** inventario 25, pipeline [21, 20], pide 18, la demanda es 35. Se venden 25 y se **pierden 10**. Costo = 0 + 9 x 10 + 10 + 2 x 18 = **136**.
+
 ## 2. Qué es RL en 5 líneas
 
 1. Hay un **agente** que toma decisiones y un **entorno** donde esas decisiones tienen efecto.
@@ -109,7 +130,14 @@ Los valores de `s` y `S` se buscan con **grid search**: se prueban muchas combin
 
 La política final es la **red entrenada** que, dado el estado, decide el pedido. Se entrena con varias semillas; se elige la de mejor resultado en **validación** (episodios distintos a los de entrenamiento) y se compara contra las referencias en **test** (episodios que nunca se usaron para decidir nada). Las 4 políticas enfrentan exactamente las mismas demandas.
 
-## 10. Glosario
+## 10. Qué NO es esto
+
+- **No es aprendizaje supervisado.** Nadie le da al agente ejemplos de "en esta situación, el pedido correcto es X". Aprende solo con la recompensa (el costo) que obtiene al simular.
+- **No es optimización exacta.** Los métodos exactos (por ejemplo, programación dinámica) calculan la mejor política con garantías, pero necesitan conocer el modelo, como la distribución de la demanda. Aquí no se calcula ningún óptimo: el agente aprende una buena política aproximada, sin garantía de que sea la mejor posible.
+- **No garantiza ser mejor que una heurística.** En este proyecto RL queda prácticamente empatado con la regla (s, S) bien afinada: una diferencia de apenas ~0.4 %, que ni siquiera es igual en todas las semillas. Que un método sea más sofisticado no significa que gane.
+- **No es un sistema listo para usar en una tienda real.** Es un ejemplo académico: un solo producto, demanda sintética y costos de partida.
+
+## 11. Glosario
 
 - **Agente:** quien toma decisiones.
 - **Entorno:** el mundo simulado donde actúa el agente.
@@ -137,3 +165,8 @@ La política final es la **red entrenada** que, dado el estado, decide el pedido
 - **Baseline:** método simple de referencia contra el que se compara.
 - **Semilla:** número que fija el azar para poder repetir resultados.
 - **MDP:** proceso de decisión de Markov; el modelo formal (estados, acciones, transiciones, recompensas) de un problema de RL.
+
+## 12. Para seguir
+
+- [DECISIONES.md](DECISIONES.md): por qué el proyecto está hecho así y no de otra forma (alternativas, límites y preguntas difíciles).
+- [GUIA_USO.md](GUIA_USO.md): instalar, reproducir, probar variaciones y extender el código.
