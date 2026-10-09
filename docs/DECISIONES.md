@@ -74,7 +74,7 @@ Otras constantes del problema que tampoco tienen justificación escrita **(por c
 
 - **Qué se eligió:** red de 2 capas ocultas de 64 neuronas para ambos algoritmos. DQN: 150 000 pasos, tasa de aprendizaje 1e-3, buffer 50 000, etc. PPO: 300 000 pasos, tasa 3e-4, `n_steps` 1000, `ent_coef` 0.01, etc. (lista completa en `config.py`).
 - **Alternativas:** redes más grandes o profundas; búsqueda sistemática de hiperparámetros.
-- **Por qué:** son **valores de partida razonables, no optimizados**. No hay búsqueda sistemática en el repo, y no se ajustaron mirando los resultados de test. Funcionaron al primer intento: ambos algoritmos aprenden a un costo cercano al de (s, S). Pruebas puntuales hechas al documentar (una semilla, DQN, ver FAQ) sugieren que una red de 128x128 o más o menos pasos no cambian mucho el resultado en este problema.
+- **Por qué:** son **valores de partida razonables, no optimizados**. No hay búsqueda sistemática en el repo, y no se ajustaron mirando los resultados de test. Funcionaron al primer intento en el sentido de que, con el mejor checkpoint según validación (ver decisión 10), ambos algoritmos llegan a un costo cercano al de (s, S). El entrenamiento es inestable: el modelo del último paso rinde peor. Pruebas puntuales hechas al documentar (una semilla, DQN, ver FAQ) sugieren que una red de 128x128 o más o menos pasos no cambian mucho el resultado en este problema.
 - **Qué se sacrifica:** no sabemos si hay una configuración notablemente mejor. Con una búsqueda de hiperparámetros los resultados de RL podrían moverse.
 - **Dónde:** `config.py`: `NET_ARCH`, `DQN_STEPS`, `PPO_STEPS`, `DQN_PARAMS`, `PPO_PARAMS`.
 
