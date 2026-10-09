@@ -79,6 +79,21 @@ def grid_search_ss():
     return best
 
 
+def make_agent(name, seed=0):
+    """Devuelve (entorno, choose) para 'ingenua', 'ss', 'dqn' o 'ppo'."""
+    if name in ("ingenua", "ss"):
+        policy = NaivePolicy() if name == "ingenua" else load_ss()
+        return InventoryEnv(continuous=True), baseline_chooser(policy)
+    from stable_baselines3 import DQN, PPO  # import aqui para no cargar torch si no hace falta
+    cls = DQN if name == "dqn" else PPO
+    model = cls.load(C.MODELS_DIR / f"{name}_seed{seed}.zip", device="cpu")
+
+    def choose(obs, env):
+        action, _ = model.predict(obs, deterministic=True)
+        return action
+    return InventoryEnv(continuous=(name == "ppo")), choose
+
+
 def load_ss():
     """Lee s y S guardados por la busqueda."""
     p = json.loads((C.RESULTS_DIR / "ss_params.json").read_text())
