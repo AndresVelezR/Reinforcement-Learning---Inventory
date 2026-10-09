@@ -118,6 +118,10 @@ Otras constantes del problema que tampoco tienen justificación escrita **(por c
 
 ## Preguntas frecuentes
 
+### ¿Por qué el modelo evaluado no es el del último paso?
+
+Porque el entrenamiento es inestable y el último paso suele ser peor que el mejor momento. Cada 10 000 pasos se mide el costo en validación (20 episodios, semillas 500-519) y se guarda el mejor checkpoint; ese es el modelo de `models/` y el que se evalúa en test. Se llama parada temprana (*early stopping*) y no contamina el test, porque la selección usa otras semillas. Los `model.num_timesteps` guardados lo muestran: 100 000, 140 000 y 120 000 pasos en DQN (de 150 000) y 80 000, 300 000 y 300 000 en PPO (de 300 000). Medición puntual de una revisión independiente (semilla 0, no versionada en `results/`): el modelo del último paso costó 6530.7 en PPO y 6582.2 en DQN, frente a 6220.9 y 6226.3 con el checkpoint elegido y 6254.2 de (s, S). Ver la decisión 10.
+
 ### ¿RL le gana a (s, S) o empata?
 
 Respuesta corta: **equivalencia práctica**, sin afirmar que RL gane. En la tabla del README el costo promedio es 6254.2 para (s, S), 6229.3 para DQN y 6227.4 para PPO: RL queda unos 25 puntos (~0.4 %) más barato. Es una diferencia pequeña e inconsistente entre semillas, y con 3 semillas de entrenamiento no se puede afirmar que RL supere a (s, S).
@@ -150,6 +154,18 @@ Por qué podría pasar (hipótesis, no verificadas): (s, S) con `s` y `S` bien e
 ### ¿Cuándo sí valdría la pena RL?
 
 No lo medimos aquí. Intuiciones razonables, a tomar como hipótesis: cuando el problema tenga muchas piezas que interactúan (varios productos, varias bodegas, restricciones compartidas) y no exista una heurística clásica bien probada. Para una discusión seria, leer Gijsbrechts et al. (2022), listado en el README. Para un problema de un solo producto como este, una heurística bien afinada es una gran referencia y RL tiene que justificar su costo (entrenamiento, ajuste, falta de garantías).
+
+### ¿Cuál es el óptimo real?
+
+No lo sabemos: no se implementó programación dinámica exacta. Con L=3 y pedidos de a 5, el espacio de estados probablemente es manejable para calcularla (estimación sin medir). Si es así, daría el óptimo de referencia contra el cual medir qué tan cerca están (s, S), DQN y PPO. Queda como trabajo futuro. No afirmamos que no sea viable.
+
+### ¿Por qué DQN y PPO y no otros algoritmos?
+
+Son dos familias distintas (valor y política) y muy conocidas, con acciones discretas y continuas respectivamente. No se comparó con A2C, SAC u otros: no hay resultados de esos algoritmos en este proyecto. Ver la decisión 5.
+
+### ¿Por qué esos costos e hiperparámetros?
+
+Son valores de partida razonables, sin búsqueda sistemática; los resultados dependen de ellos y podrían cambiar con otros. Ver las decisiones 2 y 8, y "Limitaciones".
 
 ### ¿Por qué no entrenar más tiempo?
 
