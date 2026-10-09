@@ -58,9 +58,18 @@ Cada vez que abras una terminal nueva hay que volver a activar el entorno (`sour
 | 2. Grid search | busca `s` y `S` | `results/ss_params.json` | 36 s | 36 s (no cambia con `--quick`) |
 | 3. Entrenamiento | DQN y PPO | `models/*.zip`, `results/logs/` | 31 s (1 semilla) | 824 s (3 semillas x 2 algoritmos) |
 | 4. Evaluación | tabla y figuras | `results/metrics.*`, `results/figures/`, `results/best_seeds.json` | 7-10 s | 32 s |
-| **Total** | | | **72-80 s** | **892 s (~15 min)** |
+| **Total** | | | **72-87 s (~1.5 min)** | **892 s (~15 min)** |
 
-Por algoritmo y semilla en la corrida completa: DQN ~93 s, PPO ~183 s.
+Por algoritmo y semilla en la corrida completa: DQN ~93 s, PPO ~183 s. El total de `--quick` dependió del equipo: una revisión independiente midió 87 s dos veces y en otra prueba salieron 76 s.
+
+**`--quick` no es idéntico al camino completo** (se verificó en `train.py`, y es solo una prueba de humo):
+
+- Los pasos se multiplican por `QUICK_FACTOR` (0.1): 15 000 en DQN y 30 000 en PPO.
+- DQN usa `learning_starts=500` en vez de 1000.
+- La validación se mide cada 10 000 pasos, así que en `--quick` DQN la mide una sola vez (a los 10 000 pasos) y PPO tres veces. El "mejor checkpoint" casi no se elige entre nada.
+- Solo se entrena la semilla 0.
+
+Por eso los números de `--quick` no representan el rendimiento del proyecto.
 
 Comandos:
 
@@ -133,7 +142,7 @@ Un detalle importante: las filas de DQN y PPO usan el **mejor checkpoint según 
 |---|---|---|
 | Costo promedio | Costo total de un episodio de 100 días, promedio de los episodios de test. Para DQN y PPO, además, promedio de las semillas de entrenamiento. | Menor es mejor. Es la medida principal. |
 | Desv. entre episodios | Qué tanto varía el costo de un episodio a otro (por la suerte con la demanda). | Una política con valor alto es menos predecible. No es un error de la media. |
-| Desv. entre semillas | Qué tanto varía el costo promedio entre entrenamientos con distinta semilla. Solo DQN y PPO. | Mide estabilidad del entrenamiento. Con 3 semillas es una estimación poco fiable. |
+| Desv. entre semillas | Qué tanto varía el costo promedio entre entrenamientos con distinta semilla. Solo DQN y PPO. | Mide estabilidad del entrenamiento. Con 3 semillas es una estimación poco fiable. `evaluate.py` usa `np.std` con `ddof=0` (divide entre 3). Con `ddof=1` (divide entre 2) daría 8.2 en DQN y 36.1 en PPO en vez de 6.7 y 29.5. Medición propia, no versionada en `results/` (costos medios de test por semilla: DQN 6226.3, 6223.0, 6238.5; PPO 6220.9, 6266.3, 6195.0). PPO varía bastante más entre semillas que DQN, pero con 3 semillas eso tampoco es concluyente. |
 | Nivel de servicio (%) | Porcentaje de la demanda que se atendió. | Más alto es mejor para el cliente, pero no es gratis: la ingenua tiene 99.1 % porque acumula inventario, y por eso su costo es alto. |
 | Inventario promedio | Unidades en bodega al final del día, en promedio. | Más inventario significa más costo de almacenar. |
 
