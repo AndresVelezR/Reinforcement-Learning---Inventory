@@ -99,3 +99,12 @@ def test_lost_sales_when_demand_equals_inventory():
     fixed_demand(env, 41)
     _, _, _, _, info = env.step(0)
     assert info["lost_sales"] == 1 and info["cost"] == C.LOST_SALE_COST
+
+
+def test_truncated_only_at_last_day():
+    env = InventoryEnv()
+    env.reset(seed=0)
+    for day in range(1, C.EPISODE_LEN + 1):
+        _, _, terminated, truncated, _ = env.step(0)
+        assert not terminated
+        assert truncated == (day == C.EPISODE_LEN)  # solo el dia 100
