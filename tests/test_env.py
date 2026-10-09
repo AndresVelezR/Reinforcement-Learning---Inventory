@@ -139,3 +139,16 @@ def test_observation_scale_and_clip():
     assert np.allclose(env._obs() * C.OBS_SCALE, [10, 20, 30])
     env.inventory = 10 * C.OBS_SCALE * C.OBS_CLIP  # muy por encima del limite
     assert np.isclose(env._obs()[0], C.OBS_CLIP)
+
+
+def test_observation_pipeline_order():
+    # el pipeline va con el pedido mas viejo primero (el que llega antes)
+    env = InventoryEnv()
+    env.reset(seed=0)
+    env.inventory, env.pipeline = 10, [20, 30]
+    obs = env._obs() * C.OBS_SCALE
+    assert np.allclose(obs[1:], [20, 30])
+    fixed_demand(env, 0)
+    env.step(0)  # llegan los 20 (el mas viejo); el pipeline queda [30, 0]
+    obs = env._obs() * C.OBS_SCALE
+    assert np.allclose(obs, [30, 30, 0])
