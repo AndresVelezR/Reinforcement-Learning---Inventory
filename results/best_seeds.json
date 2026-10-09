@@ -1,0 +1,7 @@
+{
+  "por_algoritmo": {
+    "dqn": 0,
+    "ppo": 2
+  },
+  "mejor_global": "ppo"
+}
