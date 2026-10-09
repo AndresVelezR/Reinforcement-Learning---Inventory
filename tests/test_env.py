@@ -122,3 +122,11 @@ def test_continuous_action_is_rounded_not_truncated():
     assert order_for(0.404) == 35   # 35.1 -> 35
     assert order_for(0.0) == 25
     assert order_for(-1.0) == 0 and order_for(1.0) == 50
+
+
+def test_demand_is_poisson_with_mean_20():
+    env = InventoryEnv()
+    env.reset(seed=0)
+    d = np.array([env._sample_demand() for _ in range(20000)])
+    assert abs(d.mean() - C.DEMAND_MEAN) < 0.3
+    assert abs(d.var() - C.DEMAND_MEAN) < 1.5  # en Poisson la varianza es igual a la media
