@@ -136,7 +136,7 @@ Un dato para no confundirse: en una medición puntual de una revisión independi
 
 - **No es aprendizaje supervisado.** Nadie le da al agente ejemplos de "en esta situación, el pedido correcto es X". Aprende solo con la recompensa (el costo) que obtiene al simular.
 - **No es optimización exacta.** Los métodos exactos (por ejemplo, programación dinámica) calculan la mejor política con garantías, pero necesitan conocer el modelo, como la distribución de la demanda. Aquí no se calcula ningún óptimo: el agente aprende una buena política aproximada, sin garantía de que sea la mejor posible.
-- **No garantiza ser mejor que una heurística.** En este proyecto RL queda prácticamente empatado con la regla (s, S) bien afinada: una diferencia de apenas ~0.4 %, que ni siquiera es igual en todas las semillas. Que un método sea más sofisticado no significa que gane.
+- **No garantiza ser mejor que una heurística.** En este proyecto RL queda en equivalencia práctica con la regla (s, S) bien afinada: una diferencia de apenas ~0.4 % a favor de RL, que ni siquiera tiene el mismo signo en todas las semillas (5 de 6 modelos mejor, 1 peor). Con solo 3 semillas no se puede afirmar que RL supere a (s, S). Que un método sea más sofisticado no significa que gane.
 - **No es un sistema listo para usar en una tienda real.** Es un ejemplo académico: un solo producto, demanda sintética y costos de partida.
 
 ## 11. Glosario

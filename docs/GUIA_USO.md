@@ -126,14 +126,14 @@ Un detalle importante: las filas de DQN y PPO usan el **mejor checkpoint según 
 | Nivel de servicio (%) | Porcentaje de la demanda que se atendió. | Más alto es mejor para el cliente, pero no es gratis: la ingenua tiene 99.1 % porque acumula inventario, y por eso su costo es alto. |
 | Inventario promedio | Unidades en bodega al final del día, en promedio. | Más inventario significa más costo de almacenar. |
 
-Qué permite concluir: la ingenua es claramente peor que las otras tres. Qué **no** permite concluir: que DQN sea mejor o peor que PPO (diferencia dentro del ruido), ni que RL "siempre" iguale a una heurística (es un solo problema con una sola configuración).
+Qué permite concluir: la ingenua es claramente peor que las otras tres. Qué **no** permite concluir: que DQN sea mejor o peor que PPO (diferencia dentro del ruido), ni que RL supere a (s, S): la diferencia (~0.4 % a favor de RL) es pequeña e inconsistente entre semillas, y con 3 semillas no es concluyente. Tampoco que RL "siempre" iguale a una heurística (es un solo problema con una sola configuración).
 
 ### Las figuras (`results/figures/`)
 
 | Figura | Qué muestra | Qué buscar | Qué permite concluir / qué no |
 |---|---|---|---|
 | `curvas_aprendizaje.png` | Costo de validación de DQN y PPO a lo largo del entrenamiento (promedio de semillas, banda = desviación), con líneas horizontales para ingenua y (s, S). | Que las curvas bajen y se estabilicen cerca de la línea de (s, S). | Permite ver cuánto tarda en aprender cada algoritmo. Solo existe con los logs de `results/logs/`, que se generan al entrenar. |
-| `comparacion_costos.png` | Barras del costo promedio en test, con barras de error (desviación entre episodios). | Que las barras de (s, S), DQN y PPO queden casi a la misma altura. | Muestra que RL iguala a (s, S) y supera a la ingenua. Las barras de error son la variación entre episodios, no un intervalo de confianza de la media. |
+| `comparacion_costos.png` | Barras del costo promedio en test, con barras de error (desviación entre episodios). | Que las barras de (s, S), DQN y PPO queden casi a la misma altura. | Muestra que RL queda a la par de (s, S) (equivalencia práctica) y supera a la ingenua. Las barras de error son la variación entre episodios, no un intervalo de confianza de la media. |
 | `trayectoria.png` | 60 días del mismo episodio con (s, S) y con el mejor agente de RL: inventario, demanda, pedidos y quiebres de stock (cruces rojas). | Cómo reacciona cada política a los picos de demanda y cuándo se queda sin stock. | Es un solo episodio: sirve para entender el comportamiento, no para comparar rendimiento. |
 | `politica_aprendida.png` | El pedido que decide cada agente según la posición de inventario (con el pipeline repartido en partes iguales), junto a la regla (s, S). | Que la forma sea parecida: pide mucho cuando hay poco y deja de pedir cuando hay suficiente. | Sirve para explicar qué aprendió. En posiciones bajas el DQN difiere de (s, S): son estados que casi no ocurren (ver la FAQ de DECISIONES.md). |
 

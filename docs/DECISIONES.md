@@ -110,25 +110,38 @@ Otras constantes del problema que tampoco tienen justificación escrita **(por c
 - **Tres semillas de entrenamiento.** Alcanza para ver tendencias, no para afirmar diferencias finas entre algoritmos.
 - **Un solo problema, con costos fijos.** No se probaron otros valores de costos, demanda o lead time de forma sistemática.
 - **Sin ajuste sistemático de hiperparámetros.** Los valores son de partida; los resultados de RL podrían mejorar o empeorar con otros.
-- **La referencia (s, S) tiene resolución 4** (paso de la cuadrícula).
+- **La referencia (s, S) tiene resolución 4** (paso de la cuadrícula). Medición puntual de una revisión independiente (no versionada en `results/`, la reprodujimos): con paso 1 sale s=78, S=86, el costo de (s, S) baja un poco (6250.8 en test) y la diferencia con RL pasa a -21.6 a -23.5, que sigue siendo distinguible de cero.
+- **El intervalo de confianza de la comparación solo cubre la variabilidad de la demanda**, no la del entrenamiento (3 semillas).
 - **No hay óptimo exacto** contra el cual comparar.
 
 ## Preguntas frecuentes
 
-### ¿Por qué RL no ganó a (s, S)?
+### ¿RL le gana a (s, S) o empata?
 
-Matiz importante: no "no ganó", sino que la diferencia es muy pequeña. En la tabla del README el costo promedio es 6254.2 para (s, S), 6229.3 para DQN y 6227.4 para PPO: unos 25 puntos, aproximadamente 0.4 %. Como todas las políticas enfrentan las mismas demandas, se puede mirar la diferencia episodio por episodio. Medición puntual hecha al documentar (200 episodios de test, un modelo por celda, diferencia = RL menos (s, S); negativo es mejor para RL):
+Respuesta corta: **equivalencia práctica**, sin afirmar que RL gane. En la tabla del README el costo promedio es 6254.2 para (s, S), 6229.3 para DQN y 6227.4 para PPO: RL queda unos 25 puntos (~0.4 %) más barato. Es una diferencia pequeña e inconsistente entre semillas, y con 3 semillas de entrenamiento no se puede afirmar que RL supere a (s, S).
 
-| Modelo | Diferencia media | Error estándar | Mejor que (s, S) en |
+Como todas las políticas enfrentan las mismas demandas, se puede mirar la diferencia episodio por episodio. Medición propia al documentar (copia temporal, 200 episodios de test con semillas 1000-1199, diferencia = RL menos (s, S); negativo significa RL más barato; intervalo de 95 % = media ± 1.96 × error estándar). Coincide con la de una revisión independiente:
+
+| Modelo | Diferencia media | Intervalo 95 % | Mejor que (s, S) en |
 |---|---|---|---|
-| DQN semilla 0 | -27.9 | 6.7 | 60 % de episodios |
-| DQN semilla 1 | -31.2 | 6.3 | 62 % |
-| DQN semilla 2 | -15.8 | 7.7 | 53 % |
-| PPO semilla 0 | -33.4 | 7.5 | 62 % |
-| PPO semilla 1 | +12.1 | 4.7 | 44 % |
-| PPO semilla 2 | -59.2 | 6.7 | 74 % |
+| DQN semilla 0 | -27.9 | [-41.1, -14.8] | 60 % de episodios |
+| DQN semilla 1 | -31.2 | [-43.5, -19.0] | 62 % |
+| DQN semilla 2 | -15.8 | [-30.9, -0.6] | 53 % |
+| PPO semilla 0 | -33.4 | [-48.1, -18.6] | 62 % |
+| PPO semilla 1 | +12.1 | [+2.8, +21.4] | 44 % |
+| PPO semilla 2 | -59.2 | [-72.4, -46.1] | 74 % |
+| DQN, promedio de 3 semillas | -25.0 | [-37.0, -12.9] | 55 % |
+| PPO, promedio de 3 semillas | -26.8 | [-38.1, -15.6] | 63 % |
+| Los 6 modelos juntos | -25.9 | [-36.0, -15.8] | 62 % |
 
-Lectura: en 5 de 6 modelos RL queda un poco por debajo en costo (mejor), y en 1 un poco por encima. La ventaja es real en el sentido estadístico para varios modelos, pero es muy pequeña en términos prácticos y no es consistente entre semillas. Por eso el README habla de empate práctico.
+Cómo leerlo:
+
+- En 5 de 6 modelos RL queda más barato y en uno (PPO semilla 1) queda más caro. El signo no es consistente.
+- **El intervalo mide la variabilidad de la demanda, no la del entrenamiento.** Dice que ese modelo concreto fue algo más barato en esos 200 episodios; no dice que el algoritmo lo sea en general. La variación entre semillas (6.7 en DQN y 29.5 en PPO, ver GUIA_USO.md) es del mismo orden que la diferencia.
+- La referencia (s, S) usa una cuadrícula de paso 4 (s=76, S=84). Con una cuadrícula de paso 1, buscada con las semillas de ajuste 2000-2029, sale s=78, S=86 y su costo de test baja a 6250.8 (medición puntual, la reprodujimos y coincide con la revisión independiente). La diferencia con RL pasa a -21.6 (DQN, intervalo [-33.5, -9.6]) y -23.5 (PPO, intervalo [-34.6, -12.3]): sigue siendo distinguible de cero, pero es un poco menor.
+- Los modelos de RL se evalúan con el mejor checkpoint según validación (ver decisión 10). El modelo del último paso rinde peor.
+
+Formulación recomendada: RL iguala a una heurística clásica bien ajustada (diferencia pequeña, inconsistente entre semillas), con parada temprana, sin haber recibido la estructura de la política. Evita decir "RL gana" y también "empata" sin este matiz.
 
 Por qué podría pasar (hipótesis, no verificadas): (s, S) con `s` y `S` bien elegidos ya es una regla muy buena para un solo producto con demanda estable; casi no hay margen. Además esta medición es de un solo problema y 3 semillas.
 
