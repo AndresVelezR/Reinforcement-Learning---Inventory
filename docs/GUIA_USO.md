@@ -8,7 +8,18 @@ Nota sobre las mediciones: los tiempos y cifras de esta guía son **mediciones p
 
 Requisitos: Python 3.10, 3.11 o 3.12. Se probó con **3.11.9**. Python 3.13 y 3.14 no se probaron con este repo.
 
-Linux o Mac:
+Linux (instalación liviana, solo CPU, recomendada):
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install torch --index-url https://download.pytorch.org/whl/cpu
+pip install -r requirements.txt
+```
+
+Por qué conviene: con `pip install -r requirements.txt` a secas, en Linux `pip` instala una versión de torch que trae librerías CUDA (para GPU). Una revisión independiente midió un entorno virtual de **5.6 GB**, y en un disco temporal chico la instalación falló con `No space left on device`. Este proyecto solo usa la CPU. Probado en un entorno nuevo (Linux, Python 3.11.9, medición puntual): el primer comando instaló `torch 2.14.1+cpu`, el segundo reconoció que ya cumple el `torch==2.14.1` fijado en `requirements.txt` (la versión local `+cpu` lo satisface) y el entorno quedó en **1.2 GB**. Con eso `pytest` dio `5 passed` y `python run_all.py --quick` terminó en 76 s. Hace falta espacio libre en disco: la instalación normal necesita bastante más de 5.6 GB libres mientras instala.
+
+Linux o Mac, instalación normal (en Mac no se probó en esta máquina):
 
 ```bash
 python3 -m venv .venv
@@ -235,6 +246,7 @@ Con esas ediciones, `python train.py --algo a2c --seeds 0 --quick` y `python dem
 | Problema | Causa probable | Solución |
 |---|---|---|
 | `ModuleNotFoundError: No module named 'torch'` (u otro) | El entorno virtual no está activado, o `pip install` no terminó. | Activa `.venv` y corre `pip install -r requirements.txt` de nuevo, mirando el final de la salida. |
+| `No space left on device` al instalar | La instalación normal de torch en Linux pesa varios GB (entorno de 5.6 GB) y el disco o `/tmp` no alcanza. | Usa la instalación solo-CPU de la sección 1 (entorno de 1.2 GB). Si `/tmp` es chico, apunta los temporales de pip a un disco con espacio: `TMPDIR=$HOME/.cache/pip-tmp pip install -r requirements.txt` (con la carpeta creada; esto se usó en una revisión y funcionó). Revisa el espacio con `df -h`. |
 | La instalación de `torch` tarda o pesa mucho | En Linux, `pip` descarga una versión grande con soporte para GPU (cientos de MB). | Es normal. Solo se usa la CPU. Espera a que termine. |
 | Versión de Python incorrecta | Usas una versión fuera de 3.10-3.12. | Crea el entorno con una versión soportada (sección 1). |
 | `ValueError: setting an array element with a sequence` al correr `evaluate.py` | Hay logs en `results/logs/` de corridas distintas (por ejemplo `--quick` y completa). | `rm -rf results/logs` y repite, o reentrena todas las semillas con el mismo modo. |

@@ -31,9 +31,11 @@ Requisitos: Python 3.10-3.12 (probado con 3.11.9).
 
 ```bash
 python3 -m venv .venv && source .venv/bin/activate      # Windows: ver docs/GUIA_USO.md
-pip install -r requirements.txt
+pip install -r requirements.txt   # Linux: mejor la instalación liviana de abajo
 python run_all.py --quick                               # verificación en ~1-2 min
 ```
+
+**Linux, instalación liviana:** el torch que instala `pip` por defecto trae librerías CUDA (un entorno de 5.6 GB). Si solo vas a usar la CPU, antes de `pip install -r requirements.txt` corre `pip install torch --index-url https://download.pytorch.org/whl/cpu` (probado: entorno de 1.2 GB). Detalle y espacio en disco en [`docs/GUIA_USO.md`](docs/GUIA_USO.md), sección 1. Windows y Mac: no probado en esta máquina.
 
 Para la corrida completa (la que genera los números de arriba): `python run_all.py` (~15 min en CPU). Para ver al agente decidir día por día: `python demo.py --policy ppo --days 10`.
 
