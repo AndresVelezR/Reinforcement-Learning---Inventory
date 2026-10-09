@@ -130,3 +130,12 @@ def test_demand_is_poisson_with_mean_20():
     d = np.array([env._sample_demand() for _ in range(20000)])
     assert abs(d.mean() - C.DEMAND_MEAN) < 0.3
     assert abs(d.var() - C.DEMAND_MEAN) < 1.5  # en Poisson la varianza es igual a la media
+
+
+def test_observation_scale_and_clip():
+    env = InventoryEnv()
+    env.reset(seed=0)
+    env.inventory, env.pipeline = 10, [20, 30]
+    assert np.allclose(env._obs() * C.OBS_SCALE, [10, 20, 30])
+    env.inventory = 10 * C.OBS_SCALE * C.OBS_CLIP  # muy por encima del limite
+    assert np.isclose(env._obs()[0], C.OBS_CLIP)
