@@ -65,3 +65,90 @@ def test_shapes_and_truncation():
 def test_check_env():
     check_env(InventoryEnv(continuous=False))
     check_env(InventoryEnv(continuous=True))
+
+
+def fixed_demand(env, value):
+    # reemplaza el sorteo de la demanda por un valor fijo
+    env._sample_demand = lambda: value
+
+
+def test_lead_time_with_nonzero_pipeline():
+    # el pipeline [7, 9] llega en orden (el mas viejo primero) y el pedido nuevo al tercer dia
+    env = InventoryEnv()
+    env.reset(seed=0)
+    fixed_demand(env, 0)
+    env.inventory, env.pipeline = 0, [7, 9]
+    env.step(2)  # pide 10
+    assert env.inventory == 7 and env.pipeline == [9, 10]    # inicio dia 1
+    env.step(0)
+    assert env.inventory == 16 and env.pipeline == [10, 0]   # inicio dia 2
+    env.step(0)
+    assert env.inventory == 26 and env.pipeline == [0, 0]    # inicio dia 3: llega el pedido
+
+
+def test_lost_sales_when_demand_equals_inventory():
+    # demanda igual al inventario: se vende todo y no se pierde nada
+    env = InventoryEnv()
+    env.reset(seed=0)
+    fixed_demand(env, 40)  # el inventario inicial es 40
+    _, _, _, _, info = env.step(0)
+    assert info["sales"] == 40 and info["lost_sales"] == 0 and info["inventory"] == 0
+    assert info["cost"] == 0  # sin sobrante, sin ventas perdidas, sin pedido
+    # una unidad mas de demanda: se pierde exactamente una
+    env.reset(seed=0)
+    fixed_demand(env, 41)
+    _, _, _, _, info = env.step(0)
+    assert info["lost_sales"] == 1 and info["cost"] == C.LOST_SALE_COST
+
+
+def test_truncated_only_at_last_day():
+    env = InventoryEnv()
+    env.reset(seed=0)
+    for day in range(1, C.EPISODE_LEN + 1):
+        _, _, terminated, truncated, _ = env.step(0)
+        assert not terminated
+        assert truncated == (day == C.EPISODE_LEN)  # solo el dia 100
+
+
+def test_continuous_action_is_rounded_not_truncated():
+    env = InventoryEnv(continuous=True)
+
+    def order_for(x):
+        env.reset(seed=0)
+        fixed_demand(env, 0)
+        return env.step(np.array([x], dtype=np.float32))[4]["order"]
+
+    assert order_for(-0.496) == 13  # (x + 1) / 2 * 50 = 12.6 -> 13 (truncar daria 12)
+    assert order_for(0.404) == 35   # 35.1 -> 35
+    assert order_for(0.0) == 25
+    assert order_for(-1.0) == 0 and order_for(1.0) == 50
+
+
+def test_demand_is_poisson_with_mean_20():
+    env = InventoryEnv()
+    env.reset(seed=0)
+    d = np.array([env._sample_demand() for _ in range(20000)])
+    assert abs(d.mean() - C.DEMAND_MEAN) < 0.3
+    assert abs(d.var() - C.DEMAND_MEAN) < 1.5  # en Poisson la varianza es igual a la media
+
+
+def test_observation_scale_and_clip():
+    env = InventoryEnv()
+    env.reset(seed=0)
+    env.inventory, env.pipeline = 10, [20, 30]
+    assert np.allclose(env._obs() * C.OBS_SCALE, [10, 20, 30])
+    env.inventory = 10 * C.OBS_SCALE * C.OBS_CLIP  # muy por encima del limite
+    assert np.isclose(env._obs()[0], C.OBS_CLIP)
+
+
+def test_observation_pipeline_order():
+    # el pipeline va con el pedido mas viejo primero (el que llega antes)
+    env = InventoryEnv()
+    env.reset(seed=0)
+    env.inventory, env.pipeline = 10, [20, 30]
+    obs = env._obs() * C.OBS_SCALE
+    assert np.allclose(obs[1:], [20, 30])
+    fixed_demand(env, 0)
+    env.step(0)  # llegan los 20 (el mas viejo); el pipeline queda [30, 0]
+    obs = env._obs() * C.OBS_SCALE
+    assert np.allclose(obs, [30, 30, 0])
