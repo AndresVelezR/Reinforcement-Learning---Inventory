@@ -77,7 +77,7 @@ Con eso se restauran los archivos versionados. `results/logs/` no está versiona
 | Comando | Qué hace |
 |---|---|
 | `python policies.py` | Grid search de `s` y `S` (30 episodios por combinación). Escribe `results/ss_params.json`. Sin opciones. |
-| `python train.py` | Entrena DQN y PPO. Guarda en `models/{algo}_seed{n}.zip` el mejor checkpoint según validación, y las curvas en `results/logs/`. |
+| `python train.py` | Entrena DQN y PPO. Guarda en `models/{algo}_seed{n}.zip` el **mejor checkpoint según validación** (se mide cada 10 000 pasos), que puede no ser el del último paso, y las curvas en `results/logs/`. |
 | `python evaluate.py` | Evalúa las 4 políticas en 200 episodios de test. Genera tabla y 4 figuras. |
 | `python demo.py` | Imprime un episodio día por día. |
 | `python run_all.py` | Corre todo en orden. |
@@ -115,6 +115,8 @@ Notas: `demo.py --policy ss` necesita `results/ss_params.json` (viene en el repo
 ## 4. Cómo leer la tabla y las figuras
 
 ### La tabla (`results/metrics.md`)
+
+Un detalle importante: las filas de DQN y PPO usan el **mejor checkpoint según validación** de cada semilla, no el modelo del último paso de entrenamiento. El modelo final rinde peor (en una medición puntual de una revisión independiente, semilla 0, no versionada en `results/`: PPO 6530.7 y DQN 6582.2 contra 6220.9 y 6226.3 con el checkpoint elegido). La tabla muestra lo que se logra **con parada temprana**.
 
 | Columna | Qué significa | Cómo leerla |
 |---|---|---|

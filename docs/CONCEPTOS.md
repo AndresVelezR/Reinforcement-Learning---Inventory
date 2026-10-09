@@ -128,7 +128,9 @@ Los valores de `s` y `S` se buscan con **grid search**: se prueban muchas combin
 
 ## 9. Política final
 
-La política final es la **red entrenada** que, dado el estado, decide el pedido. Se entrena con varias semillas; se elige la de mejor resultado en **validación** (episodios distintos a los de entrenamiento) y se compara contra las referencias en **test** (episodios que nunca se usaron para decidir nada). Las 4 políticas enfrentan exactamente las mismas demandas.
+La política final es la **red entrenada** que, dado el estado, decide el pedido. Se entrena con varias semillas. Cada 10 000 pasos se mide su costo en **validación** (episodios distintos a los de entrenamiento) y se guarda el **mejor checkpoint**, no el del último paso. A esto se le llama parada temprana (*early stopping*): se corta en el mejor momento porque el entrenamiento es inestable y la red puede empeorar al seguir entrenando. De las semillas se elige la de mejor resultado en validación para las figuras. Al final se compara contra las referencias en **test** (episodios que nunca se usaron para decidir nada), así que la selección no contamina el resultado. Las 4 políticas enfrentan exactamente las mismas demandas.
+
+Un dato para no confundirse: en una medición puntual de una revisión independiente (semilla 0, no versionada en `results/`), el modelo del último paso costó 6530.7 en PPO y 6582.2 en DQN, frente a 6220.9 y 6226.3 con el mejor checkpoint. La conclusión es que RL llega al nivel de (s, S) con parada temprana, no necesariamente al final del entrenamiento.
 
 ## 10. Qué NO es esto
 
